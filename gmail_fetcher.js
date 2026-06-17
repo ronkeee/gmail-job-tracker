@@ -45,7 +45,7 @@ const ATS_DOMAINS = ['greenhouse.io', 'greenhouse-mail.io', 'lever.co', 'ashbyhq
 
 // Senders that match the job-keyword search but are never job applications
 // (newsletters, marketing tools, account notices)
-const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com'];
+const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com', 'taxhackers.io'];
 
 // Some ATS platforms (e.g. Comeet) put the company name directly in the
 // sending subdomain — "notifications@guardio.comeet-notifications.com" — so
@@ -67,9 +67,10 @@ function extractCompanyFromEmail(emailAddress) {
   if (/^(gmail|yahoo|outlook|hotmail|icloud|me|protonmail|googlemail)\./.test(domain)) return null;
   // Skip ATS platforms — subject parsing is more reliable
   if (ATS_DOMAINS.some(ats => domain.includes(ats))) return null;
-  const clean = domain.replace(/^(mail|jobs|careers|noreply|no-reply|notifications|info|hello|team|us|eu|hire)\./i, '');
-  const name = clean.split('.')[0];
-  if (name.length <= 2) return null; // skip "us", "eu" etc
+  const parts = domain.split('.');
+  // Always take the segment right before the TLD (e.g. "jetbrains" from "hiring.jetbrains.com")
+  const name = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+  if (name.length <= 2) return null;
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
@@ -174,7 +175,10 @@ function extractRoleFromBody(bodyText) {
 
 // Is this subject (or body) likely a real job application email?
 function isJobEmail(subject, bodyText) {
-  const s = (subject + ' ' + (bodyText || '').slice(0, 1000)).toLowerCase();
+  const body = (bodyText || '').slice(0, 1000);
+  // Reject non-job salutations — school, community, or parent communications
+  if (/^\s*dear\s+(parents?|students?|families|guardians?|members?)\b/i.test(body)) return false;
+  const s = (subject + ' ' + body).toLowerCase();
   const jobKeywords = [
     'application', 'applying', 'applied', 'interview', 'position', 'role',
     'candidate', 'hiring', 'recruiter', 'opportunity', 'job offer',
