@@ -45,7 +45,7 @@ const ATS_DOMAINS = ['greenhouse.io', 'greenhouse-mail.io', 'lever.co', 'ashbyhq
 
 // Senders that match the job-keyword search but are never job applications
 // (newsletters, marketing tools, account notices)
-const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com', 'taxhackers.io'];
+const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com'];
 
 // Some ATS platforms (e.g. Comeet) put the company name directly in the
 // sending subdomain — "notifications@guardio.comeet-notifications.com" — so
@@ -176,8 +176,19 @@ function extractRoleFromBody(bodyText) {
 // Is this subject (or body) likely a real job application email?
 function isJobEmail(subject, bodyText) {
   const body = (bodyText || '').slice(0, 1000);
-  // Reject non-job salutations — school, community, or parent communications
-  if (/^\s*dear\s+(parents?|students?|families|guardians?|members?)\b/i.test(body)) return false;
+
+  // Reject non-professional salutations — school, community, marketing, or parent emails
+  if (/^\s*dear\s+(parents?|students?|families|guardians?|members?|customers?|residents?|subscribers?|clients?|community|all)\b/i.test(body)) return false;
+
+  // Reject newsletter/digest subject patterns
+  if (/\b(newsletter|weekly digest|monthly digest|weekly roundup|issue\s*#?\d+|vol\.?\s*\d+)\b/i.test(subject)) return false;
+  // "Meet First Last" — person-spotlight marketing emails, not job applications
+  if (/\bmeet\s+[A-Z][a-z]+\s+[A-Z][a-z]+/.test(subject)) return false;
+
+  // Reject marketing/newsletter emails: unsubscribe link present + no job signal in subject
+  const subjectHasJobSignal = /application|applying|interview|position|role|candidate|hiring|recruiter|offer/i.test(subject);
+  if (!subjectHasJobSignal && /\bunsubscribe\b/i.test(body)) return false;
+
   const s = (subject + ' ' + body).toLowerCase();
   const jobKeywords = [
     'application', 'applying', 'applied', 'interview', 'position', 'role',
