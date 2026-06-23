@@ -45,7 +45,7 @@ const ATS_DOMAINS = ['greenhouse.io', 'greenhouse-mail.io', 'lever.co', 'ashbyhq
 
 // Senders that match the job-keyword search but are never job applications
 // (newsletters, marketing tools, account notices)
-const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com'];
+const NON_JOB_DOMAINS = ['google.com', 'tldrnewsletter.com', 'amplemarket.com', 'riverside.fm', 'producthunt.com', 'linkedin.com'];
 
 // Some ATS platforms (e.g. Comeet) put the company name directly in the
 // sending subdomain — "notifications@guardio.comeet-notifications.com" — so
